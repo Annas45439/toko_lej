@@ -22,7 +22,7 @@ const schema = z.object({
   buy_price: z.coerce.number().min(0),
   date: z.string().min(1, "Tanggal wajib diisi"),
 });
-type FormData = z.infer<typeof schema>;
+type FormData = { product_id: number; supplier_id: number; qty: number; buy_price: number; date: string };
 
 export default function StokPage() {
   const [history, setHistory] = useState<StockIn[]>([]);
@@ -34,7 +34,7 @@ export default function StokPage() {
   const [search, setSearch] = useState("");
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: { date: format(new Date(), "yyyy-MM-dd") },
   });
 
@@ -112,7 +112,7 @@ export default function StokPage() {
       </div>
 
       <ModalForm isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Catat Stok Masuk" size="md">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
           <div>
             <label className="label-glass">Produk</label>
             <select {...register("product_id")} className="input-glass w-full">

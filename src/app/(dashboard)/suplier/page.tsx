@@ -17,7 +17,6 @@ const supplierSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   phone: z.string().optional(),
   address: z.string().optional(),
-  email: z.string().email("Email tidak valid").optional().or(z.literal("")),
 });
 
 type SupplierForm = z.infer<typeof supplierSchema>;
@@ -45,8 +44,7 @@ export default function SuplierPage() {
     const query = search.toLowerCase();
     return data.filter((item) =>
       item.name.toLowerCase().includes(query) ||
-      item.phone?.toLowerCase().includes(query) ||
-      item.email?.toLowerCase().includes(query)
+      item.phone?.toLowerCase().includes(query)
     );
   }, [search, data]);
 
@@ -64,7 +62,7 @@ export default function SuplierPage() {
   }
 
   const openAdd = () => {
-    reset({ name: "", phone: "", address: "", email: "" });
+    reset({ name: "", phone: "", address: "" });
     setModal({ open: true });
   };
 
@@ -72,8 +70,7 @@ export default function SuplierPage() {
     reset({ 
       name: item.name, 
       phone: item.phone ?? "", 
-      address: item.address ?? "", 
-      email: item.email ?? "" 
+      address: item.address ?? "" 
     });
     setModal({ open: true, edit: item });
   };
@@ -159,7 +156,7 @@ export default function SuplierPage() {
                   <th>#</th>
                   <th>Nama Suplier</th>
                   <th>Telepon</th>
-                  <th>Email</th>
+
                   <th>Alamat</th>
                   <th>Aksi</th>
                 </tr>
@@ -170,7 +167,6 @@ export default function SuplierPage() {
                     <td className="text-slate-600 text-xs">{i + 1}</td>
                     <td className="text-white font-medium">{item.name}</td>
                     <td>{item.phone ?? <span className="text-slate-600">-</span>}</td>
-                    <td>{item.email ?? <span className="text-slate-600">-</span>}</td>
                     <td className="max-w-xs truncate">{item.address ?? <span className="text-slate-600">-</span>}</td>
                     <td>
                       <div className="flex gap-2">
@@ -217,11 +213,6 @@ export default function SuplierPage() {
                 <div>
                   <label className="label-glass">Nomor Telepon</label>
                   <input {...register("phone")} className="input-glass" placeholder="08xx..." />
-                </div>
-                <div>
-                  <label className="label-glass">Email</label>
-                  <input {...register("email")} type="email" className="input-glass" placeholder="email@contoh.com" />
-                  {errors.email && <p className="error-text">{errors.email.message}</p>}
                 </div>
                 <div>
                   <label className="label-glass">Alamat</label>

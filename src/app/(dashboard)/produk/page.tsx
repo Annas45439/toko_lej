@@ -22,7 +22,7 @@ const schema = z.object({
   category_id: z.coerce.number().min(1, "Pilih kategori"),
   unit_id: z.coerce.number().min(1, "Pilih satuan"),
 });
-type FormData = z.infer<typeof schema>;
+type FormData = { name: string; price: number; buy_price: number; stock: number; min_stock: number; category_id: number; unit_id: number };
 
 function StockBadge({ stock, minStock }: { stock: number; minStock: number }) {
   if (stock === 0) return <span className="badge-red">HABIS</span>;
@@ -43,7 +43,7 @@ export default function ProdukPage() {
   const [saving, setSaving] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
   });
 
   const fetchAll = async () => {
@@ -188,7 +188,7 @@ export default function ProdukPage() {
       {/* Modal Add/Edit */}
       <ModalForm isOpen={modalOpen} onClose={() => setModalOpen(false)}
         title={editProduct ? "Edit Produk" : "Tambah Produk"} size="lg">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
           <div>
             <label className="label-glass">Nama Produk</label>
             <input {...register("name")} className="input-glass w-full" placeholder="Nama produk" />

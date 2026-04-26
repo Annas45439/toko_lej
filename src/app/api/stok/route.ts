@@ -71,7 +71,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
-    const userId = Number((session.user as any).id);
+    const userId = (session.user as any)?.id ? Number((session.user as any).id) : null;
+    if (!userId) {
+      return NextResponse.json({ error: "User ID tidak valid dalam sesi" }, { status: 401 });
+    }
     const { product_id, supplier_id, qty, buy_price, date } = parsed.data;
 
     // Create stock in record + update product stock in transaction
