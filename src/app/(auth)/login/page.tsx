@@ -92,10 +92,10 @@ export default function LoginPage() {
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="relative w-20 h-20 rounded-2xl bg-[#0f172a] border border-white/10 flex items-center justify-center mb-5 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] group-hover:scale-105"
+            className="relative w-20 h-20 rounded-2xl bg-[#0f172a] border border-white/10 flex items-center justify-center mb-5 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] group-hover:scale-105 overflow-hidden"
           >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent" />
-            <Store size={40} className="text-cyan-400 relative z-10 transition-transform duration-500 group-hover:-rotate-12" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent z-10" />
+            <img src="/logo.png" alt="Logo" className="w-14 h-14 object-contain relative z-10 transition-transform duration-500 group-hover:scale-110" />
           </motion.div>
           <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             <TrueFocus 
