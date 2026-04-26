@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { md5 } from "@/lib/md5";
+import md5 from "md5";
 
 export async function GET(
   req: NextRequest,
@@ -18,7 +18,7 @@ export async function GET(
     });
     if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -43,7 +43,7 @@ export async function PUT(
       select: { id: true, username: true, level: true },
     });
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -63,7 +63,7 @@ export async function DELETE(
     }
     await prisma.tb_users.delete({ where: { id: Number(params.id) } });
     return NextResponse.json({ message: "User dihapus" });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
