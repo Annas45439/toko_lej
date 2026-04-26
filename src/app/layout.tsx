@@ -18,7 +18,9 @@ export const metadata: Metadata = {
   title: "Toko LEJ - Lestari Eka Jaya",
   description: "Sistem Point of Sale (POS) Toko Lestari Eka Jaya",
   icons: {
-    icon: "/logo.png",
+    icon: "/logo.png?v=2",
+    shortcut: "/logo.png?v=2",
+    apple: "/logo.png?v=2",
   },
 };
 
