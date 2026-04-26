@@ -49,10 +49,10 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { date: "desc" },
-    });
+    }) as any;
 
     return NextResponse.json(
-      data.map((t) => ({
+      data.map((t: any) => ({
         ...t,
         subtotal: Number(t.subtotal),
         discount_amount: Number(t.discount_amount),
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         payment_amount: Number(t.payment_amount),
         change_amount: Number(t.change_amount),
         date: t.date.toISOString(),
-        tb_transaction_details: t.tb_transaction_details.map((d) => ({
+        tb_transaction_details: t.tb_transaction_details.map((d: any) => ({
           ...d,
           price: Number(d.price),
           subtotal: Number(d.subtotal),
@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
       }))
     );
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("GET Transactions Error:", error);
+    return NextResponse.json({ error: "Gagal mengambil data transaksi" }, { status: 500 });
   }
 }
 
@@ -90,28 +90,44 @@ export async function POST(req: NextRequest) {
       total, points_earned, payment_method, payment_amount, 
       change_amount, items 
     } = parsed.data;
-    const userId = Number((session.user as any).id);
+    
+    // Safety check for userId from session
+    const userId = (session.user as any)?.id ? Number((session.user as any).id) : null;
+    if (!userId) {
+      return NextResponse.json({ error: "User ID tidak valid dalam sesi" }, { status: 401 });
+    }
 
-    // Validate stock
-    for (const item of items) {
-      const product = await prisma.tb_products.findUnique({ where: { id: item.product_id } });
-      if (!product || product.stock < item.qty) {
-        return NextResponse.json(
-          { error: `Stok produk ID ${item.product_id} tidak mencukupi` },
-          { status: 400 }
-        );
+    // Validate customer exists if provided
+    if (customer_id) {
+      const customer = await prisma.tb_customers.findUnique({
+        where: { id: customer_id },
+      });
+      if (!customer) {
+        return NextResponse.json({ error: `Pelanggan ID ${customer_id} tidak ditemukan` }, { status: 404 });
       }
+    }
+
+    // Validate all products first
+    const productIds = items.map((i: any) => i.product_id);
+    const dbProducts = await prisma.tb_products.findMany({
+      where: { id: { in: productIds } }
+    });
+
+    for (const item of items) {
+      const p = dbProducts.find(prod => prod.id === item.product_id);
+      if (!p) return NextResponse.json({ error: `Produk ID ${item.product_id} tidak ditemukan` }, { status: 404 });
+      if (p.stock < item.qty) return NextResponse.json({ error: `Stok ${p.name} tidak mencukupi (Tersisa: ${p.stock})` }, { status: 400 });
     }
 
     const now = new Date();
     const invoiceNo = `INV${format(now, "yyyyMMddHHmmss")}`;
 
-    const transaction = await prisma.$transaction(async (tx) => {
-      // Create transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Transaction Header & Details
       const trx = await tx.tb_transactions.create({
         data: {
           invoice_no: invoiceNo,
-          customer_id: customer_id ?? null,
+          customer_id: customer_id || null,
           user_id: userId,
           subtotal,
           discount_amount,
@@ -124,14 +140,14 @@ export async function POST(req: NextRequest) {
           status: "selesai",
           date: now,
           tb_transaction_details: {
-            create: items.map((i) => ({
+            create: items.map((i: any) => ({
               product_id: i.product_id,
               qty: i.qty,
               price: i.price,
               subtotal: i.price * i.qty,
             })),
           },
-        },
+        } as any,
         include: {
           customer: true,
           user: { select: { id: true, username: true } },
@@ -141,41 +157,45 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Update customer points
+      // 2. Update Customer Points if applicable
       if (customer_id && points_earned > 0) {
         await tx.tb_customers.update({
           where: { id: customer_id },
-          data: { points: { increment: points_earned } },
+          data: { points: { increment: points_earned } } as any,
         });
       }
 
-      // Update stock and sales_monthly
+      // 3. Process each item (Stock & Sales Monthly)
       for (const item of items) {
+        // Update Stock
         await tx.tb_products.update({
           where: { id: item.product_id },
           data: { stock: { decrement: item.qty } },
         });
 
+        // Sales Monthly Record
         const yr = now.getFullYear();
         const mo = now.getMonth() + 1;
-        const maxPeriod = await tx.tb_sales_monthly.findFirst({
-          where: { product_id: item.product_id },
-          orderBy: { period_x: "desc" },
-        });
-
-        const existing = await tx.tb_sales_monthly.findFirst({
+        
+        const existingSales = await tx.tb_sales_monthly.findFirst({
           where: { product_id: item.product_id, year: yr, month: mo },
         });
 
-        if (existing) {
+        if (existingSales) {
           await tx.tb_sales_monthly.update({
-            where: { id: existing.id },
+            where: { id: existingSales.id },
             data: {
               total_qty: { increment: item.qty },
               total_revenue: { increment: item.price * item.qty },
             },
           });
         } else {
+          // Get max period_x for this product to keep trend consistent
+          const lastSale = await tx.tb_sales_monthly.findFirst({
+            where: { product_id: item.product_id },
+            orderBy: { period_x: "desc" }
+          });
+          
           await tx.tb_sales_monthly.create({
             data: {
               product_id: item.product_id,
@@ -183,32 +203,34 @@ export async function POST(req: NextRequest) {
               month: mo,
               total_qty: item.qty,
               total_revenue: item.price * item.qty,
-              period_x: (maxPeriod?.period_x ?? 0) + 1,
+              period_x: (lastSale?.period_x ?? 0) + 1,
             },
           });
         }
       }
 
       return trx;
-    });
+    }) as any;
 
+    // Final response with proper number casting
     return NextResponse.json({
-      ...transaction,
-      subtotal: Number(transaction.subtotal),
-      discount_amount: Number(transaction.discount_amount),
-      tax_amount: Number(transaction.tax_amount),
-      total: Number(transaction.total),
-      payment_amount: Number(transaction.payment_amount),
-      change_amount: Number(transaction.change_amount),
-      date: transaction.date.toISOString(),
-      tb_transaction_details: transaction.tb_transaction_details.map((d) => ({
+      ...result,
+      subtotal: Number(result.subtotal),
+      discount_amount: Number(result.discount_amount),
+      tax_amount: Number(result.tax_amount),
+      total: Number(result.total),
+      payment_amount: Number(result.payment_amount),
+      change_amount: Number(result.change_amount),
+      date: result.date.toISOString(),
+      tb_transaction_details: result.tb_transaction_details.map((d: any) => ({
         ...d,
         price: Number(d.price),
         subtotal: Number(d.subtotal),
       })),
     }, { status: 201 });
+
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("POST Transaction Error:", error);
+    return NextResponse.json({ error: "Gagal memproses transaksi di server" }, { status: 500 });
   }
 }
