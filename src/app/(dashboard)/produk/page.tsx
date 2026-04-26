@@ -5,7 +5,6 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
 import { Plus, Search, Edit2, Trash2, Package } from "lucide-react";
 import toast from "react-hot-toast";
 import { ColumnDef } from "@tanstack/react-table";

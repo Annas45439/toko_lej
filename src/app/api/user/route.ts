@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { md5 } from "@/lib/md5";
+import md5 from "md5";
 import { z } from "zod";
 
 const schema = z.object({
@@ -21,7 +21,7 @@ export async function GET() {
       select: { id: true, username: true, level: true, password: true },
     });
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, username: true, level: true },
     });
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

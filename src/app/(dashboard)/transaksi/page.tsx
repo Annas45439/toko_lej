@@ -5,7 +5,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ShoppingCart, Plus, Minus, X, CreditCard,
-  Banknote, Receipt, Printer, RefreshCw, CheckCircle,
+  Banknote, Printer, RefreshCw, CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useKeranjangStore } from "@/store/keranjangStore";

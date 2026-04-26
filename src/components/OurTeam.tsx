@@ -1,5 +1,4 @@
 'use client';
-import { useEffect, useRef } from 'react';
 import ProfileCard from './ProfileCard/ProfileCard';
 import BlurText from './BlurText/BlurText';
 

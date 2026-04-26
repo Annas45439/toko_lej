@@ -1,8 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ChevronRight, Bell, Crown, User, UserCircle, Menu } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { ChevronRight, Crown, User, UserCircle, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { useEffect, useState } from "react";

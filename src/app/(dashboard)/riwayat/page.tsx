@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { History, Search, Filter, Eye, X, Receipt } from "lucide-react";
+import { History, Search, Eye, X, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
