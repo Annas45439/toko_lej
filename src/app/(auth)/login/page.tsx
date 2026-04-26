@@ -187,7 +187,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] mt-4 border border-white/10"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#06b6d4] to-[#2563eb] text-white font-extrabold text-sm uppercase tracking-widest hover:from-[#22d3ee] hover:to-[#3b82f6] active:scale-[0.98] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] mt-6 border border-white/20"
             >
               {loading ? (
                 <>
@@ -195,9 +195,7 @@ export default function LoginPage() {
                   Memproses...
                 </>
               ) : (
-                <>
-                  <span>Masuk ke Sistem</span>
-                </>
+                "Masuk ke Sistem"
               )}
             </button>
           </form>
