@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Truck, Plus, Search, Edit2, Trash2, X, Save } from "lucide-react";
@@ -9,71 +9,78 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { Supplier } from "@/types";
 import toast from "react-hot-toast";
 
-const schema = z.object({
+// Validation Schema
+const supplierSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   phone: z.string().optional(),
   address: z.string().optional(),
   email: z.string().email("Email tidak valid").optional().or(z.literal("")),
 });
-type FormData = z.infer<typeof schema>;
 
-interface Suplier {
-  id: number;
-  name: string;
-  phone: string | null;
-  address: string | null;
-  email: string | null;
-}
+type SupplierForm = z.infer<typeof supplierSchema>;
 
 export default function SuplierPage() {
-  const [data, setData] = useState<Suplier[]>([]);
-  const [filtered, setFiltered] = useState<Suplier[]>([]);
+  // --- States ---
+  const [data, setData] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<{ open: boolean; edit?: Suplier }>({ open: false });
+  const [modal, setModal] = useState<{ open: boolean; edit?: Supplier }>({ open: false });
   const [saving, setSaving] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  // --- Form Hook ---
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierForm>({
+    resolver: zodResolver(supplierSchema),
   });
 
-  const fetchData = useCallback(async () => {
+  // --- Effects ---
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // --- Derived State (Search Filter) ---
+  const filteredData = useMemo(() => {
+    const query = search.toLowerCase();
+    return data.filter((item) =>
+      item.name.toLowerCase().includes(query) ||
+      item.phone?.toLowerCase().includes(query) ||
+      item.email?.toLowerCase().includes(query)
+    );
+  }, [search, data]);
+
+  // --- Handlers ---
+  async function fetchData() {
     setLoading(true);
     try {
       const res = await axios.get("/api/suplier");
       setData(res.data);
-      setFiltered(res.data);
     } catch {
       toast.error("Gagal memuat data suplier");
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  useEffect(() => {
-    const q = search.toLowerCase();
-    setFiltered(data.filter((d) =>
-      d.name.toLowerCase().includes(q) ||
-      d.phone?.toLowerCase().includes(q) ||
-      d.email?.toLowerCase().includes(q)
-    ));
-  }, [search, data]);
+  }
 
   const openAdd = () => {
     reset({ name: "", phone: "", address: "", email: "" });
     setModal({ open: true });
   };
-  const openEdit = (item: Suplier) => {
-    reset({ name: item.name, phone: item.phone ?? "", address: item.address ?? "", email: item.email ?? "" });
+
+  const openEdit = (item: Supplier) => {
+    reset({ 
+      name: item.name, 
+      phone: item.phone ?? "", 
+      address: item.address ?? "", 
+      email: item.email ?? "" 
+    });
     setModal({ open: true, edit: item });
   };
+
   const closeModal = () => setModal({ open: false });
 
-  const onSubmit = async (form: FormData) => {
+  const onSubmit = async (form: SupplierForm) => {
     setSaving(true);
     try {
       if (modal.edit) {
@@ -92,7 +99,7 @@ export default function SuplierPage() {
     }
   };
 
-  const handleDelete = async (item: Suplier) => {
+  const handleDelete = async (item: Supplier) => {
     if (!confirm(`Hapus suplier "${item.name}"?`)) return;
     try {
       await axios.delete(`/api/suplier/${item.id}`);
@@ -103,8 +110,10 @@ export default function SuplierPage() {
     }
   };
 
+  // --- Render ---
   return (
     <div className="space-y-6">
+      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="page-header">
         <div>
           <h1 className="page-title flex items-center gap-2">
@@ -117,27 +126,46 @@ export default function SuplierPage() {
         </button>
       </motion.div>
 
+      {/* Search Filter */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         className="glass-card rounded-2xl p-4">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input className="input-glass pl-9" placeholder="Cari nama, telepon, atau email..."
-            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input 
+            className="input-glass pl-9" 
+            placeholder="Cari nama, telepon, atau email..."
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+          />
         </div>
       </motion.div>
 
+      {/* Table Section */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
         className="glass-card rounded-2xl overflow-hidden">
-        {loading ? <PageSkeleton /> : filtered.length === 0 ? (
-          <EmptyState icon={<Truck size={40} />} message="Belum ada suplier" description="Klik tombol Tambah Suplier untuk mulai" />
+        {loading ? (
+          <PageSkeleton />
+        ) : filteredData.length === 0 ? (
+          <EmptyState 
+            icon={<Truck size={40} />} 
+            title="Belum ada suplier" 
+            description="Klik tombol Tambah Suplier untuk mulai" 
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-glass">
               <thead>
-                <tr><th>#</th><th>Nama Suplier</th><th>Telepon</th><th>Email</th><th>Alamat</th><th>Aksi</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Nama Suplier</th>
+                  <th>Telepon</th>
+                  <th>Email</th>
+                  <th>Alamat</th>
+                  <th>Aksi</th>
+                </tr>
               </thead>
               <tbody>
-                {filtered.map((item, i) => (
+                {filteredData.map((item, i) => (
                   <motion.tr key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                     <td className="text-slate-600 text-xs">{i + 1}</td>
                     <td className="text-white font-medium">{item.name}</td>
@@ -162,36 +190,47 @@ export default function SuplierPage() {
         )}
       </motion.div>
 
+      {/* Form Modal */}
       <AnimatePresence>
         {modal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative glass-card rounded-2xl w-full max-w-md p-6">
+              className="relative glass-card rounded-2xl w-full max-w-md p-6"
+            >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-white">{modal.edit ? "Edit Suplier" : "Tambah Suplier"}</h3>
                 <button onClick={closeModal} className="btn-secondary p-2"><X size={16} /></button>
               </div>
+
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Nama Suplier *</label>
+                  <label className="label-glass">Nama Suplier *</label>
                   <input {...register("name")} className="input-glass" placeholder="Nama suplier..." />
-                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+                  {errors.name && <p className="error-text">{errors.name.message}</p>}
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Nomor Telepon</label>
+                  <label className="label-glass">Nomor Telepon</label>
                   <input {...register("phone")} className="input-glass" placeholder="08xx..." />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Email</label>
+                  <label className="label-glass">Email</label>
                   <input {...register("email")} type="email" className="input-glass" placeholder="email@contoh.com" />
-                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+                  {errors.email && <p className="error-text">{errors.email.message}</p>}
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Alamat</label>
-                  <textarea {...register("address")} rows={3} className="input-glass resize-none" placeholder="Alamat lengkap..." />
+                  <label className="label-glass">Alamat</label>
+                  <textarea 
+                    {...register("address")} 
+                    rows={3} 
+                    className="input-glass resize-none" 
+                    placeholder="Alamat lengkap..." 
+                  />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={closeModal} className="btn-secondary flex-1">Batal</button>

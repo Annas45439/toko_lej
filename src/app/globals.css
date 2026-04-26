@@ -232,6 +232,39 @@ body {
   .badge-red    { background: rgba(239,68,68,0.12);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
   .badge-slate  { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
 
+  .label-glass {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+
+  .error-text {
+    font-size: 0.7rem;
+    color: #f87171;
+    margin-top: 0.25rem;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+  }
+
   /* ─── Page header ───────────────────────────────────────── */
   .page-header {
     display: flex;

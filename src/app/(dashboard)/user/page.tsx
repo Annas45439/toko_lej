@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserCog, Plus, Search, Edit2, Trash2, X, Save, Eye, EyeOff, Shield } from "lucide-react";
@@ -9,79 +9,84 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { AppUser } from "@/types";
 import toast from "react-hot-toast";
 
-const addSchema = z.object({
+// Validation Schema
+const userSchema = z.object({
   username: z.string().min(3, "Username minimal 3 karakter"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
+  password: z.string().optional().refine((val) => !val || val.length >= 6, {
+    message: "Password minimal 6 karakter",
+  }),
   level: z.enum(["admin", "kasir"]),
 });
-const editSchema = z.object({
-  username: z.string().min(3, "Username minimal 3 karakter"),
-  password: z.string().optional(),
-  level: z.enum(["admin", "kasir"]),
-});
-type AddForm = z.infer<typeof addSchema>;
-type EditForm = z.infer<typeof editSchema>;
 
-interface UserData {
-  id: number;
-  username: string;
-  level: string;
-  created_at?: string;
-}
+type UserForm = z.infer<typeof userSchema>;
 
 export default function UserPage() {
-  const [data, setData] = useState<UserData[]>([]);
-  const [filtered, setFiltered] = useState<UserData[]>([]);
+  // --- States ---
+  const [data, setData] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<{ open: boolean; edit?: UserData }>({ open: false });
+  const [modal, setModal] = useState<{ open: boolean; edit?: AppUser }>({ open: false });
   const [saving, setSaving] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<any>({
-    resolver: zodResolver(modal.edit ? editSchema : addSchema),
+  // --- Form Hook ---
+  const { register, handleSubmit, reset, formState: { errors }, setError } = useForm<UserForm>({
+    resolver: zodResolver(userSchema),
   });
 
-  const fetchData = useCallback(async () => {
+  // --- Effects ---
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // --- Derived State (Search Filter) ---
+  const filteredData = useMemo(() => {
+    const query = search.toLowerCase();
+    return data.filter((d) => d.username.toLowerCase().includes(query));
+  }, [search, data]);
+
+  // --- Handlers ---
+  async function fetchData() {
     setLoading(true);
     try {
       const res = await axios.get("/api/user");
       setData(res.data);
-      setFiltered(res.data);
     } catch {
       toast.error("Gagal memuat data user");
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  useEffect(() => {
-    const q = search.toLowerCase();
-    setFiltered(data.filter((d) => d.username.toLowerCase().includes(q)));
-  }, [search, data]);
+  }
 
   const openAdd = () => {
     reset({ username: "", password: "", level: "kasir" });
     setModal({ open: true });
     setShowPwd(false);
   };
-  const openEdit = (item: UserData) => {
+
+  const openEdit = (item: AppUser) => {
     reset({ username: item.username, password: "", level: item.level });
     setModal({ open: true, edit: item });
     setShowPwd(false);
   };
+
   const closeModal = () => setModal({ open: false });
 
-  const onSubmit = async (form: AddForm | EditForm) => {
+  const onSubmit = async (form: UserForm) => {
+    // Extra validation for new user
+    if (!modal.edit && !form.password) {
+      setError("password", { message: "Password wajib untuk user baru" });
+      return;
+    }
+
     setSaving(true);
     try {
       if (modal.edit) {
         const payload = { ...form };
-        if (!payload.password) delete (payload as any).password;
+        if (!payload.password) delete payload.password;
         await axios.put(`/api/user/${modal.edit.id}`, payload);
         toast.success("User diperbarui");
       } else {
@@ -97,8 +102,10 @@ export default function UserPage() {
     }
   };
 
-  const handleDelete = async (item: UserData) => {
-    if (!confirm(`Hapus user "@${item.username}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+  const handleDelete = async (item: AppUser) => {
+    const confirmMsg = `Hapus user "@${item.username}"? Tindakan ini tidak dapat dibatalkan.`;
+    if (!confirm(confirmMsg)) return;
+
     try {
       await axios.delete(`/api/user/${item.id}`);
       toast.success("User dihapus");
@@ -108,8 +115,10 @@ export default function UserPage() {
     }
   };
 
+  // --- Render ---
   return (
     <div className="space-y-6">
+      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="page-header">
         <div>
           <h1 className="page-title flex items-center gap-2">
@@ -122,27 +131,44 @@ export default function UserPage() {
         </button>
       </motion.div>
 
+      {/* Search Filter */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         className="glass-card rounded-2xl p-4">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input className="input-glass pl-9" placeholder="Cari username..."
-            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input 
+            className="input-glass pl-9" 
+            placeholder="Cari username..."
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+          />
         </div>
       </motion.div>
 
+      {/* Table Section */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
         className="glass-card rounded-2xl overflow-hidden">
-        {loading ? <PageSkeleton /> : filtered.length === 0 ? (
-          <EmptyState icon={<UserCog size={40} />} message="Belum ada user" description="Tambahkan user pertama" />
+        {loading ? (
+          <PageSkeleton />
+        ) : filteredData.length === 0 ? (
+          <EmptyState 
+            icon={<UserCog size={40} />} 
+            title="Belum ada user" 
+            description="Tambahkan user pertama" 
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-glass">
               <thead>
-                <tr><th>#</th><th>Username</th><th>Role</th><th>Aksi</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Aksi</th>
+                </tr>
               </thead>
               <tbody>
-                {filtered.map((item, i) => (
+                {filteredData.map((item, i) => (
                   <motion.tr key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
                     <td className="text-slate-600 text-xs">{i + 1}</td>
                     <td>
@@ -177,45 +203,61 @@ export default function UserPage() {
         )}
       </motion.div>
 
+      {/* Form Modal */}
       <AnimatePresence>
         {modal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative glass-card rounded-2xl w-full max-w-md p-6">
+              className="relative glass-card rounded-2xl w-full max-w-md p-6"
+            >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-white">{modal.edit ? "Edit User" : "Tambah User"}</h3>
                 <button onClick={closeModal} className="btn-secondary p-2"><X size={16} /></button>
               </div>
+
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Username *</label>
+                  <label className="label-glass">Username *</label>
                   <input {...register("username")} className="input-glass" placeholder="username_login" />
-                  {errors.username && <p className="text-red-400 text-xs mt-1">{String(errors.username.message)}</p>}
+                  {errors.username && <p className="error-text">{errors.username.message}</p>}
                 </div>
+                
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">
+                  <label className="label-glass">
                     Password {modal.edit && <span className="text-slate-600">(kosongkan jika tidak diubah)</span>}
                   </label>
                   <div className="relative">
-                    <input {...register("password")} type={showPwd ? "text" : "password"}
-                      className="input-glass pr-10" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowPwd(!showPwd)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                    <input 
+                      {...register("password")} 
+                      type={showPwd ? "text" : "password"}
+                      className="input-glass pr-10" 
+                      placeholder="••••••••" 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPwd(!showPwd)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    >
                       {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
-                  {errors.password && <p className="text-red-400 text-xs mt-1">{String(errors.password.message)}</p>}
+                  {errors.password && <p className="error-text">{errors.password.message}</p>}
                 </div>
+
                 <div>
-                  <label className="text-xs text-slate-400 mb-1.5 block">Role *</label>
+                  <label className="label-glass">Role *</label>
                   <select {...register("level")} className="input-glass cursor-pointer">
                     <option value="kasir">Kasir</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
+
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={closeModal} className="btn-secondary flex-1">Batal</button>
                   <button type="submit" disabled={saving} className="btn-primary flex-1">
