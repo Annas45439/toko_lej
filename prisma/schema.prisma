@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model tb_categories {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  name        String        @unique(map: "uq_tb_categories_name") @db.VarChar(100)
+  description String?       @db.Text
+  created_at  DateTime?     @db.DateTime(0)
+  updated_at  DateTime?     @db.DateTime(0)
+  tb_products tb_products[]
+}
+
+model tb_units {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  name        String        @unique(map: "uq_tb_units_name") @db.VarChar(50)
+  created_at  DateTime?     @db.DateTime(0)
+  updated_at  DateTime?     @db.DateTime(0)
+  tb_products tb_products[]
+}
+
+model tb_suppliers {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(150)
+  phone       String?       @db.VarChar(20)
+  address     String?       @db.Text
+  created_at  DateTime?     @default(now()) @db.DateTime(0)
+  updated_at  DateTime?     @default(now()) @db.DateTime(0)
+  tb_stock_in tb_stock_in[]
+}
+
+model tb_customers {
+  id           Int               @id @default(autoincrement())
+  name         String            @db.VarChar(150)
+  phone        String?           @db.VarChar(20)
+  address      String?           @db.Text
+  created_at   DateTime?         @default(now()) @db.DateTime(0)
+  updated_at   DateTime?         @default(now()) @db.DateTime(0)
+  transactions tb_transactions[]
+}
+
+model tb_users {
+  id           Int               @id @default(autoincrement())
+  username     String            @unique @db.VarChar(100)
+  password     String            @db.VarChar(255)
+  level        String            @db.VarChar(20)
+  created_at   DateTime?         @default(now()) @db.DateTime(0)
+  updated_at   DateTime?         @default(now()) @db.DateTime(0)
+  tb_stock_in  tb_stock_in[]
+  transactions tb_transactions[]
+}
+
+model tb_products {
+  id                  Int                      @id @default(autoincrement())
+  category_id         Int                      @db.UnsignedInt
+  unit_id             Int                      @db.UnsignedInt
+  name                String                   @db.VarChar(200)
+  price               Decimal                  @db.Decimal(15, 2)
+  buy_price           Decimal                  @db.Decimal(15, 2)
+  stock               Int                      @default(0)
+  min_stock           Int                      @default(5)
+  description         String?                  @db.Text
+  created_at          DateTime?                @default(now()) @db.DateTime(0)
+  updated_at          DateTime?                @default(now()) @db.DateTime(0)
+  category            tb_categories            @relation(fields: [category_id], references: [id])
+  unit                tb_units                 @relation(fields: [unit_id], references: [id])
+  tb_stock_in         tb_stock_in[]
+  transaction_details tb_transaction_details[]
+
+  @@index([category_id], map: "tb_products_category_id_fkey")
+  @@index([unit_id], map: "tb_products_unit_id_fkey")
+}
+
+model tb_stock_in {
+  id          Int          @id @default(autoincrement())
+  product_id  Int
+  supplier_id Int
+  user_id     Int
+  qty         Int
+  buy_price   Decimal      @default(0.00) @db.Decimal(15, 2)
+  total_price Decimal?     @db.Decimal(15, 2)
+  date        DateTime     @db.Date
+  notes       String?      @db.Text
+  created_at  DateTime?    @default(now()) @db.DateTime(0)
+  product     tb_products  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_stockin_product")
+  supplier    tb_suppliers @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_stockin_supplier")
+  user        tb_users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_stockin_user")
+
+  @@index([product_id], map: "fk_stockin_product")
+  @@index([supplier_id], map: "fk_stockin_supplier")
+  @@index([user_id], map: "fk_stockin_user")
+}
+
+model tb_transactions {
+  id                     Int                      @id @default(autoincrement())
+  invoice_no             String                   @unique @db.VarChar(50)
+  customer_id            Int?
+  user_id                Int
+  total                  Decimal                  @db.Decimal(15, 2)
+  payment_method         String                   @db.VarChar(20)
+  payment_amount         Decimal                  @db.Decimal(15, 2)
+  change_amount          Decimal                  @db.Decimal(15, 2) @default(0)
+  status                 String                   @db.VarChar(20)
+  date                   DateTime                 @db.DateTime(0)
+  created_at             DateTime?                @default(now()) @db.DateTime(0)
+  tb_transaction_details tb_transaction_details[]
+  customer               tb_customers?            @relation(fields: [customer_id], references: [id])
+  user                   tb_users                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([customer_id])
+  @@index([user_id])
+}
+
+model tb_transaction_details {
+  id             Int             @id @default(autoincrement())
+  transaction_id Int
+  product_id     Int
+  qty            Int
+  price          Decimal         @db.Decimal(15, 2)
+  subtotal       Decimal         @db.Decimal(15, 2)
+  product        tb_products     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transaction    tb_transactions @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+
+  @@index([transaction_id])
+  @@index([product_id])
+}
+
+model tb_sales_monthly {
+  id            Int       @id @default(autoincrement())
+  product_id    Int
+  year          Int
+  month         Int
+  total_qty     Int
+  total_revenue Decimal   @db.Decimal(15, 2)
+  period_x      Int
+  created_at    DateTime? @default(now()) @db.DateTime(0)
+  updated_at    DateTime? @default(now()) @db.DateTime(0)
+
+  @@unique([product_id, year, month])
+}
+
+model migrations {
+  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  version   String @db.VarChar(255)
+  class     String @db.VarChar(255)
+  group     String @db.VarChar(255)
+  namespace String @db.VarChar(255)
+  time      Int
+  batch     Int    @db.UnsignedInt
+}
