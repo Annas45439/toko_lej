@@ -43,7 +43,7 @@ git branch -M main
 git push -u origin main
 ```
 
-**Repo Anda:** `git@github.com:idoooyyyy33/TOKO_LEJ.git`
+**Repo Anda:** `https://github.com/Annas45439/toko_lej.git`
 
 ---
 
@@ -95,8 +95,8 @@ Klik **"Review + create"** → **"Create"**
 Azure akan membuat GitHub Actions workflow otomatis.
 
 **Konfirmasi:**
-- **Organization**: `idoooyyyy33`
-- **Repository**: `TOKO_LEJ`
+- **Organization**: `Annas45439`
+- **Repository**: `toko_lej`
 - **Branch**: `main`
 
 ⏳ Tunggu deployment pertama selesai (~5-10 menit).
