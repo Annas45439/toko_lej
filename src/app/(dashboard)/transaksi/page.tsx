@@ -5,7 +5,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ShoppingCart, Plus, Minus, X, CreditCard,
-  Banknote, Printer, RefreshCw, CheckCircle,
+  Banknote, Printer, RefreshCw, CheckCircle, QrCode, Tag, Percent
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useKeranjangStore } from "@/store/keranjangStore";
@@ -58,8 +58,14 @@ export default function TransaksiPage() {
     try {
       const res = await axios.post("/api/transaksi", {
         customer_id: store.customerId,
+        subtotal: store.getSubtotal(),
+        discount_amount: store.discount,
+        tax_amount: store.getTaxAmount(),
+        total: store.getTotal(),
+        points_earned: store.getPointsEarned(),
         payment_method: store.paymentMethod,
-        payment_amount: store.paymentMethod === "kartu" ? total : store.paymentAmount,
+        payment_amount: store.paymentMethod === "tunai" ? store.paymentAmount : store.getTotal(),
+        change_amount: store.paymentMethod === "tunai" ? store.getChange() : 0,
         items: store.items.map((i) => ({
           product_id: i.product_id,
           qty: i.qty,
@@ -248,6 +254,24 @@ export default function TransaksiPage() {
               }`}>
               <CreditCard size={14} /> Kartu
             </button>
+            <button onClick={() => store.setPaymentMethod("qris")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-all ${
+                store.paymentMethod === "qris" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-white/5 text-slate-400 hover:bg-white/10"
+              }`}>
+              <QrCode size={14} /> QRIS
+            </button>
+          </div>
+
+          {/* Discount Input */}
+          <div className="relative">
+            <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="number"
+              value={store.discount || ""}
+              onChange={(e) => store.setDiscount(Number(e.target.value))}
+              placeholder="Diskon (Rp)"
+              className="input-glass w-full pl-9 text-xs"
+            />
           </div>
 
           {/* Payment Amount (tunai only) */}
@@ -269,11 +293,35 @@ export default function TransaksiPage() {
             </div>
           )}
 
+          {/* Breakdown */}
+          <div className="space-y-1 text-xs border-t border-white/10 pt-3">
+            <div className="flex justify-between text-slate-400">
+              <span>Subtotal</span>
+              <span>{store.getSubtotal().toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })}</span>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>PPN (11%)</span>
+              <span>{store.getTaxAmount().toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })}</span>
+            </div>
+            {store.discount > 0 && (
+              <div className="flex justify-between text-red-400">
+                <span>Diskon</span>
+                <span>-{store.discount.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })}</span>
+              </div>
+            )}
+            {store.customerId && (
+              <div className="flex justify-between text-amber-400 font-medium">
+                <span>Poin Didapat</span>
+                <span>+{store.getPointsEarned()} Poin</span>
+              </div>
+            )}
+          </div>
+
           {/* Total */}
           <div className="flex items-center justify-between py-2 border-t border-white/10">
-            <span className="text-slate-400 text-sm">Total</span>
+            <span className="text-slate-400 text-sm font-bold">TOTAL</span>
             <span className="text-xl font-bold text-cyan-400">
-              {total.toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })}
+              {store.getTotal().toLocaleString("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 })}
             </span>
           </div>
 

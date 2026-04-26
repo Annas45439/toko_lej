@@ -59,6 +59,7 @@ export interface Customer {
   name: string;
   phone?: string;
   address?: string;
+  points?: number;
 }
 
 // ============== STOCK IN ==============
@@ -89,9 +90,14 @@ export interface Transaction {
   invoice_no: string;
   customer_id?: number;
   user_id: number;
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
   total: number;
-  payment_method: "tunai" | "kartu";
+  points_earned: number;
+  payment_method: "tunai" | "kartu" | "qris";
   payment_amount: number;
+  change_amount: number;
   status: "selesai" | "batal";
   date: string;
   customer?: Customer;
@@ -111,8 +117,14 @@ export interface TransactionDetail {
 
 export interface TransactionFormData {
   customer_id?: number;
-  payment_method: "tunai" | "kartu";
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
+  total: number;
+  payment_method: "tunai" | "kartu" | "qris";
   payment_amount: number;
+  change_amount: number;
+  points_earned: number;
   items: { product_id: number; qty: number; price: number }[];
 }
 
