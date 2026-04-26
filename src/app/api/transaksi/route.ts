@@ -6,8 +6,14 @@ import { format } from "date-fns";
 
 const transactionSchema = z.object({
   customer_id: z.number().optional().nullable(),
-  payment_method: z.enum(["tunai", "kartu"]),
+  subtotal: z.number().min(0),
+  discount_amount: z.number().min(0).default(0),
+  tax_amount: z.number().min(0).default(0),
+  total: z.number().min(0),
+  points_earned: z.number().min(0).default(0),
+  payment_method: z.enum(["tunai", "kartu", "qris"]),
   payment_amount: z.number().min(0),
+  change_amount: z.number().default(0),
   items: z.array(
     z.object({
       product_id: z.number().min(1),
@@ -48,8 +54,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       data.map((t) => ({
         ...t,
+        subtotal: Number(t.subtotal),
+        discount_amount: Number(t.discount_amount),
+        tax_amount: Number(t.tax_amount),
         total: Number(t.total),
         payment_amount: Number(t.payment_amount),
+        change_amount: Number(t.change_amount),
         date: t.date.toISOString(),
         tb_transaction_details: t.tb_transaction_details.map((d) => ({
           ...d,
@@ -75,7 +85,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
-    const { customer_id, payment_method, payment_amount, items } = parsed.data;
+    const { 
+      customer_id, subtotal, discount_amount, tax_amount, 
+      total, points_earned, payment_method, payment_amount, 
+      change_amount, items 
+    } = parsed.data;
     const userId = Number((session.user as any).id);
 
     // Validate stock
@@ -89,7 +103,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const total = items.reduce((s, i) => s + i.price * i.qty, 0);
     const now = new Date();
     const invoiceNo = `INV${format(now, "yyyyMMddHHmmss")}`;
 
@@ -100,10 +113,14 @@ export async function POST(req: NextRequest) {
           invoice_no: invoiceNo,
           customer_id: customer_id ?? null,
           user_id: userId,
+          subtotal,
+          discount_amount,
+          tax_amount,
           total,
+          points_earned,
           payment_method,
           payment_amount,
-          change_amount: payment_amount - total,
+          change_amount,
           status: "selesai",
           date: now,
           tb_transaction_details: {
@@ -123,6 +140,14 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+
+      // Update customer points
+      if (customer_id && points_earned > 0) {
+        await tx.tb_customers.update({
+          where: { id: customer_id },
+          data: { points: { increment: points_earned } },
+        });
+      }
 
       // Update stock and sales_monthly
       for (const item of items) {
@@ -169,10 +194,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ...transaction,
+      subtotal: Number(transaction.subtotal),
+      discount_amount: Number(transaction.discount_amount),
+      tax_amount: Number(transaction.tax_amount),
       total: Number(transaction.total),
       payment_amount: Number(transaction.payment_amount),
+      change_amount: Number(transaction.change_amount),
       date: transaction.date.toISOString(),
-      change: payment_amount - total,
       tb_transaction_details: transaction.tb_transaction_details.map((d) => ({
         ...d,
         price: Number(d.price),

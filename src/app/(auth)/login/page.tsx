@@ -93,12 +93,12 @@ export default function LoginPage() {
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="relative mb-6 group"
+            className="relative mb-6"
           >
             <img 
               src={LogoImg.src} 
               alt="Logo" 
-              className="w-32 h-32 object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-transform duration-500 group-hover:scale-110" 
+              className="w-40 h-40 object-contain drop-shadow-[0_0_20px_rgba(34,211,238,0.5)]" 
             />
           </motion.div>
           <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>

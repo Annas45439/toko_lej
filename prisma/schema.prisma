@@ -39,6 +39,7 @@ model tb_customers {
   name         String            @db.VarChar(150)
   phone        String?           @db.VarChar(20)
   address      String?           @db.Text
+  points       Int               @default(0)
   created_at   DateTime?         @default(now()) @db.DateTime(0)
   updated_at   DateTime?         @default(now()) @db.DateTime(0)
   transactions tb_transactions[]
@@ -105,6 +106,10 @@ model tb_transactions {
   payment_method         String                   @db.VarChar(20)
   payment_amount         Decimal                  @db.Decimal(15, 2)
   change_amount          Decimal                  @db.Decimal(15, 2) @default(0)
+  subtotal               Decimal                  @db.Decimal(15, 2) @default(0)
+  discount_amount        Decimal                  @db.Decimal(15, 2) @default(0)
+  tax_amount             Decimal                  @db.Decimal(15, 2) @default(0)
+  points_earned          Int                      @default(0)
   status                 String                   @db.VarChar(20)
   date                   DateTime                 @db.DateTime(0)
   created_at             DateTime?                @default(now()) @db.DateTime(0)
