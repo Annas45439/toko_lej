@@ -11,6 +11,7 @@ import { Eye, EyeOff, Store, Loader2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import TrueFocus from "@/components/TrueFocus/TrueFocus";
 import Plasma from "@/components/Plasma/Plasma";
+import LogoImg from "@/../public/app-logo.png";
 
 const schema = z.object({
   username: z.string().min(1, "Username wajib diisi"),
@@ -95,7 +96,7 @@ export default function LoginPage() {
             className="relative w-20 h-20 rounded-2xl bg-[#0f172a] border border-white/10 flex items-center justify-center mb-5 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] group-hover:scale-105 overflow-hidden"
           >
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/5 to-transparent z-10" />
-            <img src="/app-logo.png" alt="Logo" className="w-14 h-14 object-contain relative z-10 transition-transform duration-500 group-hover:scale-110" />
+            <img src={LogoImg.src} alt="Logo" className="w-14 h-14 object-contain relative z-10 transition-transform duration-500 group-hover:scale-110" />
           </motion.div>
           <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
             <TrueFocus 
