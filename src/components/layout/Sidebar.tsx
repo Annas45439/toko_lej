@@ -106,9 +106,8 @@ export function Sidebar({ userLevel, userName }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10 group cursor-pointer transition-all relative">
-          <div className="relative w-10 h-10 flex-shrink-0 rounded-xl bg-[#0f172a] border border-white/10 flex items-center justify-center shadow-[0_4px_20px_rgb(0,0,0,0.5)] transition-all duration-300 group-hover:border-cyan-400/50 group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] group-hover:scale-105 overflow-hidden">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/5 to-transparent z-10" />
-            <img src="/app-logo.png" alt="Logo" className="w-8 h-8 object-contain relative z-10 transition-transform duration-300 group-hover:scale-110" />
+          <div className="relative w-12 h-12 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+            <img src="/app-logo.png" alt="Logo" className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]" />
           </div>
           <AnimatePresence>
             {!collapsed && (
