@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import md5 from "md5";
 import { userUpdateInputSchema } from "@/lib/input-security";
+import { z } from "zod";
+
+type UserUpdateInput = z.infer<typeof userUpdateInputSchema>;
 
 export async function GET(
   req: NextRequest,
@@ -37,7 +40,7 @@ export async function PUT(
     const parsed = userUpdateInputSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
 
-    const updateData: { username: string; level: "admin" | "kasir"; password?: string } = {
+    const updateData: Pick<UserUpdateInput, "username" | "level"> & { password?: string } = {
       username: parsed.data.username,
       level: parsed.data.level,
     };
