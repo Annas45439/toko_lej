@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { supplierInputSchema } from "@/lib/input-security";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -19,7 +20,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const body = await req.json();
-    const data = await prisma.tb_suppliers.update({ where: { id: Number(params.id) }, data: body });
+    const parsed = supplierInputSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    const data = await prisma.tb_suppliers.update({ where: { id: Number(params.id) }, data: parsed.data });
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
