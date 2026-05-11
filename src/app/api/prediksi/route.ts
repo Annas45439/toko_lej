@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 function linearRegression(data: { x: number; y: number }[]) {
   const n = data.length;
   let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
