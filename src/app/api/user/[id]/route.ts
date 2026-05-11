@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import md5 from "md5";
+import { userUpdateInputSchema } from "@/lib/input-security";
 
 export async function GET(
   req: NextRequest,
@@ -32,10 +33,15 @@ export async function PUT(
     if (!session || (session.user as any).level !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const { username, password, level } = await req.json();
+    const body = await req.json();
+    const parsed = userUpdateInputSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
 
-    const updateData: any = { username, level };
-    if (password) updateData.password = md5(password);
+    const updateData: { username: string; level: "admin" | "kasir"; password?: string } = {
+      username: parsed.data.username,
+      level: parsed.data.level,
+    };
+    if (parsed.data.password) updateData.password = md5(parsed.data.password);
 
     const data = await prisma.tb_users.update({
       where: { id: Number(params.id) },

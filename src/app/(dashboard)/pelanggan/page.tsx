@@ -11,13 +11,10 @@ import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Customer } from "@/types";
 import toast from "react-hot-toast";
+import { customerInputSchema } from "@/lib/input-security";
 
 // Validation Schema
-const customerSchema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-});
+const customerSchema = customerInputSchema;
 
 type CustomerForm = z.infer<typeof customerSchema>;
 

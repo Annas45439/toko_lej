@@ -12,9 +12,10 @@ import toast from "react-hot-toast";
 import TrueFocus from "@/components/TrueFocus/TrueFocus";
 import Plasma from "@/components/Plasma/Plasma";
 import LogoImg from "@/../public/app-logo.png";
+import { usernameFieldSchema } from "@/lib/input-security";
 
 const schema = z.object({
-  username: z.string().min(1, "Username wajib diisi"),
+  username: usernameFieldSchema,
   password: z.string().min(1, "Password wajib diisi"),
 });
 type FormData = z.infer<typeof schema>;
