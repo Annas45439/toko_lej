@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { z } from "zod";
-
-const productSchema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
-  price: z.number().min(0),
-  buy_price: z.number().min(0),
-  stock: z.number().min(0),
-  min_stock: z.number().min(0),
-  category_id: z.number().min(1),
-  unit_id: z.number().min(1),
-  description: z.string().optional(),
-});
+import { productCreateInputSchema } from "@/lib/input-security";
 
 export async function GET(req: NextRequest) {
   try {
@@ -54,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const parsed = productSchema.safeParse(body);
+    const parsed = productCreateInputSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
