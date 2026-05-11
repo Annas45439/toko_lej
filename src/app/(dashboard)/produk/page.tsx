@@ -12,9 +12,10 @@ import { DataTable } from "@/components/shared/DataTable";
 import { ModalForm } from "@/components/shared/ModalForm";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { Product, Category, Unit } from "@/types";
+import { productNameFieldSchema } from "@/lib/input-security";
 
 const schema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
+  name: productNameFieldSchema,
   price: z.coerce.number().min(0, "Harga tidak valid"),
   buy_price: z.coerce.number().min(0, "Harga beli tidak valid"),
   stock: z.coerce.number().min(0),

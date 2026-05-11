@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { z } from "zod";
-
-const schema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-});
+import { customerInputSchema } from "@/lib/input-security";
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +24,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const body = await req.json();
-    const parsed = schema.safeParse(body);
+    const parsed = customerInputSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     const data = await prisma.tb_customers.create({ data: parsed.data });
     return NextResponse.json(data, { status: 201 });

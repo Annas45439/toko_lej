@@ -11,15 +11,10 @@ import { PageSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AppUser } from "@/types";
 import toast from "react-hot-toast";
+import { userUpdateInputSchema } from "@/lib/input-security";
 
 // Validation Schema
-const userSchema = z.object({
-  username: z.string().min(3, "Username minimal 3 karakter"),
-  password: z.string().optional().refine((val) => !val || val.length >= 6, {
-    message: "Password minimal 6 karakter",
-  }),
-  level: z.enum(["admin", "kasir"]),
-});
+const userSchema = userUpdateInputSchema;
 
 type UserForm = z.infer<typeof userSchema>;
 
