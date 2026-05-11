@@ -4,12 +4,14 @@ const USERNAME_REGEX = /^[A-Za-z0-9._-]+$/;
 const NAME_REGEX = /^[\p{L}\p{N}\s'.-]+$/u;
 const PHONE_REGEX = /^[0-9+\-\s()]+$/;
 
+/** Mengubah string kosong (setelah trim) menjadi undefined agar cocok untuk field opsional. */
 const emptyToUndefined = (value: unknown) => {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;
 };
 
+/** Menghapus karakter kontrol ASCII (0x00-0x1F, 0x7F) sambil mempertahankan teks cetak termasuk apostrof. */
 const normalizeFreeText = (value: string) =>
   value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim();
 
@@ -107,6 +109,7 @@ export const productUpdateInputSchema = z.object({
   description: optionalFreeTextFieldSchema,
 });
 
+/** Escape karakter HTML spesial untuk mencegah XSS saat nilai user dirender sebagai HTML mentah. */
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
