@@ -64,10 +64,10 @@ export default function SuplierPage() {
   };
 
   const openEdit = (item: Supplier) => {
-    reset({ 
-      name: item.name, 
-      phone: item.phone ?? "", 
-      address: item.address ?? "" 
+    reset({
+      name: item.name,
+      phone: item.phone ?? "",
+      address: item.address ?? ""
     });
     setModal({ open: true, edit: item });
   };
@@ -125,11 +125,11 @@ export default function SuplierPage() {
         className="glass-card rounded-2xl p-4">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input 
-            className="input-glass pl-9" 
+          <input
+            className="input-glass pl-9"
             placeholder="Cari nama, telepon, atau email..."
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </motion.div>
@@ -140,10 +140,10 @@ export default function SuplierPage() {
         {loading ? (
           <PageSkeleton />
         ) : filteredData.length === 0 ? (
-          <EmptyState 
-            icon={<Truck size={40} />} 
-            title="Belum ada suplier" 
-            description="Klik tombol Tambah Suplier untuk mulai" 
+          <EmptyState
+            icon={<Truck size={40} />}
+            title="Belum ada suplier"
+            description="Klik tombol Tambah Suplier untuk mulai"
           />
         ) : (
           <div className="overflow-x-auto">
@@ -189,9 +189,9 @@ export default function SuplierPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative glass-card rounded-2xl w-full max-w-md p-6"
@@ -213,11 +213,11 @@ export default function SuplierPage() {
                 </div>
                 <div>
                   <label className="label-glass">Alamat</label>
-                  <textarea 
-                    {...register("address")} 
-                    rows={3} 
-                    className="input-glass resize-none" 
-                    placeholder="Alamat lengkap..." 
+                  <textarea
+                    {...register("address")}
+                    rows={3}
+                    className="input-glass resize-none"
+                    placeholder="Alamat lengkap..."
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
