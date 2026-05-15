@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import md5 from "md5";
+import { hashPassword } from "@/lib/password";
 import { userCreateInputSchema } from "@/lib/input-security";
 
 export async function GET() {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     const data = await prisma.tb_users.create({
       data: {
         username: parsed.data.username,
-        password: md5(parsed.data.password),
+        password: await hashPassword(parsed.data.password),
         level: parsed.data.level,
       },
       select: { id: true, username: true, level: true },
