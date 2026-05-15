@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import md5 from "md5";
+import { hashPassword } from "@/lib/password";
 import { userUpdateInputSchema } from "@/lib/input-security";
 import { z } from "zod";
 
@@ -44,7 +44,7 @@ export async function PUT(
       username: parsed.data.username,
       level: parsed.data.level,
     };
-    if (parsed.data.password) updateData.password = md5(parsed.data.password);
+    if (parsed.data.password) updateData.password = await hashPassword(parsed.data.password);
 
     const data = await prisma.tb_users.update({
       where: { id: Number(params.id) },
