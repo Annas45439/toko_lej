@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { authConfig } from "./auth.config"
 import { prisma } from "./prisma"
-import md5 from "md5"
+import { verifyPassword } from "./password"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -18,8 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!username || !password) return null
 
-        const hashedPassword = md5(password)
-        console.log("[auth] login attempt:", username, "hash:", hashedPassword)
+        console.log("[auth] login attempt:", username)
 
         const user = await prisma.tb_users.findFirst({
           where: { username },
@@ -28,7 +27,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log("[auth] user found:", user ? `${user.username} (${user.level})` : "not found")
 
         if (!user) return null
-        if (user.password !== hashedPassword) {
+        const passwordValid = await verifyPassword(password, user.password)
+        if (!passwordValid) {
           console.log("[auth] password mismatch. DB:", user.password)
           return null
         }
