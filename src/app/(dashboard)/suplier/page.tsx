@@ -16,7 +16,8 @@ import { supplierInputSchema } from "@/lib/input-security";
 // Validation Schema
 const supplierSchema = supplierInputSchema;
 
-type SupplierForm = z.infer<typeof supplierSchema>;
+type SupplierFormOutput = z.infer<typeof supplierSchema>;
+type SupplierFormInput = z.input<typeof supplierSchema>;
 
 export default function SuplierPage() {
   // --- States ---
@@ -27,7 +28,7 @@ export default function SuplierPage() {
   const [saving, setSaving] = useState(false);
 
   // --- Form Hook ---
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierForm>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierFormInput, any, SupplierFormOutput>({
     resolver: zodResolver(supplierSchema),
   });
 
@@ -74,7 +75,7 @@ export default function SuplierPage() {
 
   const closeModal = () => setModal({ open: false });
 
-  const onSubmit = async (form: SupplierForm) => {
+  const onSubmit = async (form: SupplierFormOutput) => {
     setSaving(true);
     try {
       if (modal.edit) {
