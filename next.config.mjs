@@ -22,12 +22,19 @@ const nextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains',
           },
-          { key: 'Content-Security-Policy', value: "default-src 'self'" },
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'",
+          },
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=()' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
         ],
       },
     ];
